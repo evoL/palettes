@@ -1,80 +1,12 @@
-:root {
-  --neutral-10: #020404;
-  --neutral-20: #121717;
-  --neutral-30: #2a2f2e;
-  --neutral-40: #434948;
-  --neutral-50: #5e6564;
-  --neutral-60: #7b8281;
-  --neutral-70: #99a09f;
-  --neutral-80: #b8bfbe;
-  --neutral-90: #d8e0df;
-  --neutral-95: #e9f0ef;
-  --neutral-99: #f6fefd;
+@import '/node_modules/@shoelace-style/shoelace/dist/themes/light.css';
 
-  /* blue */
-  --blue-10: #00002b;
-  --blue-20: #001547;
-  --blue-30: #003165;
-  --blue-40: #004e83;
-  --blue-50: #006ba2;
-  --blue-60: #108ac3;
-  --blue-70: #40a9e4;
-  --blue-80: #63c9ff;
-  --blue-90: #85eaff;
-  --blue-95: #96fbff;
-  --blue-99: #f2ffff;
-
-  background-color: var(--neutral-20);
-  color: var(--neutral-95);
-  font-family: sans-serif;
+body {
+  background: var(--sl-color-neutral-50);
+  color: var(--sl-color-neutral-800);
+  font-family: var(--sl-font-sans);
 }
 
-#app {
-  max-width: 800px;
-  margin: auto;
-}
-
-h1,
-h2 {
+h1, ul, li, dl, dt, dd {
   margin: 0;
   padding: 0;
-}
-
-a {
-  color: var(--blue-80);
-}
-a:hover {
-  color: var(--blue-70); 
-}
-
-.input {
-  appearance: none;
-  background: transparent;
-  border: 1px solid var(--neutral-60);
-  border-radius: 2px;
-  color: var(--neutral-60);
-}
-.input::selection {
-  background: var(--neutral-50);
-  color: var(--neutral-80);
-}
-
-button.input {
-  display: inline-block;
-  padding: 0;
-}
-
-button.input:hover {
-  background: var(--neutral-40);
-}
-
-button.input:active {
-  background: var(--neutral-50);
-}
-
-.title {
-  text-align: center;
-  font-size: 3rem;
-  font-weight: normal;
-  letter-spacing: 0.2em;
 }

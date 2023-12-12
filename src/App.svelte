@@ -1,344 +1,264 @@
-<script context="module" lang="ts">
-  import { writable } from "svelte/store";
-
-  interface PaletteDef {
-    name: string;
-    keyColors: string[];
-  }
-
-  interface State {
-    defs: PaletteDef[];
-    tones: number[];
-    useNewLightness?: boolean;
-  }
-
-  const STORAGE_KEY = "palette_generator_state";
-  const persisted = localStorage.getItem(STORAGE_KEY);
-  const state = writable<State>(
-    persisted != null
-      ? JSON.parse(persisted)
-      : {
-          defs: [{ name: "Sunglo", keyColors: ["#c75950"] }],
-          tones: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99, 100],
-          useNewLightness: true,
-        }
-  );
-
-  state.subscribe((s) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-  });
-</script>
-
 <script lang="ts">
-  import { derived } from "svelte/store";
-  import PaletteEditor from "./lib/PaletteEditor.svelte";
-  import { buildStops, displayGradient, getStops } from "./lib/generator";
-  import RemoveButton from "./lib/RemoveButton.svelte";
+  import BezierEasing from "bezier-easing";
+  import { ColorSpace } from "colorjs.io/fn";
 
-  const palettes = derived(
-    state,
-    ({ defs, tones, useNewLightness }) =>
-      new Map(
-        defs.map((d) => {
-          const range = buildStops(d.keyColors);
-          const gradient = displayGradient(range);
-          const stops = getStops(range, tones, useNewLightness);
-          return [d.name, { range, gradient, stops }];
-        })
-      )
-  );
+  import BezierStopsEditor from "./components/BezierStopsEditor.svelte";
+  import ColorRampEditor from "./components/ColorRampEditor.svelte";
+  import ColorRampView from "./components/ColorRampView.svelte";
+  import SettingsEditor from "./components/SettingsEditor.svelte";
+  import SettingsPreview from "./components/SettingsPreview.svelte";
+  import ManualStopsEditor from "./components/ManualStopsEditor.svelte";
+  import {
+    StopType,
+    type Curve,
+    type Stops,
+    ColorSpaceType,
+  } from "./lib/types";
+  import { ColorRamp } from "./lib/colors";
 
-  const huetoneJson = derived([palettes, state], ([map, { tones }]) => {
-    return JSON.stringify(
-      {
-        name: "tonal palette",
-        hues: [...map.entries()].map(([name, palette]) => ({
-          name,
-          colors: palette.stops.map((s) => s.color),
-        })),
-        tones: tones.map((t) => `${t}`),
-      },
-      undefined,
-      2
-    );
-  });
+  let stops: Stops = {
+    type: StopType.BEZIER,
+    numStops: 13,
+    curve: [
+      { x: 0, y: 0 },
+      { x: 0.25, y: 0 },
+      { x: 0.6, y: 1 },
+      { x: 1, y: 1 },
+    ],
+  };
+  let colorRamps: ColorRamp[] = [new ColorRamp()];
+  let colorSpaceType: ColorSpaceType = ColorSpaceType.OKLAB;
+  let isEditing = false;
 
-  function addPalette() {
-    state.update((s) => {
-      s.defs.push({
-        name: `Palette ${s.defs.length + 1}`,
-        keyColors: ["#abcdef"],
-      });
-      return s;
-    });
-  }
+  let actualStops: number[];
+  let colorSpace: ColorSpace;
 
-  function renamePalette(index: number, name: string): void {
-    state.update((s) => {
-      s.defs[index].name = name;
-      return s;
-    });
-  }
-
-  function updatePalette(index: number, colors: string[]): void {
-    state.update((s) => {
-      s.defs[index].keyColors = colors;
-      return s;
-    });
-  }
-
-  function removePalette(index: number) {
-    state.update((s) => ({ ...s, defs: s.defs.filter((_, i) => i !== index) }));
-  }
-
-  function addStop(stop: number, index: number) {
-    state.update((s) => {
-      s.tones.splice(index, 0, stop);
-      return s;
-    });
-  }
-
-  function removeStop(index: number) {
-    state.update((s) => ({...s, tones: s.tones.filter((_, i) => i !== index)}));
-  }
-
-  function restrictStopInput(event: InputEvent) {
-    if (event.data && !/^\d$/.test(event.data)) {
-      event.preventDefault();
+  $: colorSpace = ColorSpace.get(colorSpaceType);
+  $: {
+    switch (stops.type) {
+      case StopType.BEZIER: {
+        const { curve, skipExtremes } = stops;
+        const numStops = stops.numStops + (skipExtremes ? 2 : 0);
+        const easing = BezierEasing(
+          curve[1].x,
+          curve[1].y,
+          curve[2].x,
+          curve[2].y
+        );
+        actualStops = Array.from({ length: numStops }).map((_, i) =>
+          easing(i / (numStops - 1))
+        );
+        if (skipExtremes) {
+          actualStops = actualStops.slice(1, -1);
+        }
+        break;
+      }
+      case StopType.MANUAL:
+        actualStops = stops.values;
+        break;
     }
   }
 
-  function validateAndUpdateStop(input: HTMLInputElement, index: number) {
-    let value = Number(input.value);
-    if (value < 0) {
-      value = 0;
-      input.value = "0";
-    } else if (value > 100) {
-      value = 100;
-      input.value = "100";
+  function changeStopType(type: StopType) {
+    if (stops.type === type) return;
+
+    switch (type) {
+      case StopType.BEZIER:
+        stops = {
+          type,
+          numStops: getNumStops(),
+          curve: [
+            { x: 0, y: 0 },
+            { x: 0.25, y: 0 },
+            { x: 0.6, y: 1 },
+            { x: 1, y: 1 },
+          ],
+        };
+        break;
+      case StopType.MANUAL:
+        stops = {
+          type,
+          values: [...actualStops],
+        };
+        break;
     }
-
-    if ($state.tones[index] === value) return;
-
-    state.update((s) => {
-      s.tones[index] = value;
-      return s;
-    });
   }
 
-  function handleStopKey(event: KeyboardEvent, index: number) {
-    if (event.key !== "Enter") return;
-    validateAndUpdateStop(event.currentTarget as HTMLInputElement, index);
+  function getNumStops() {
+    switch (stops.type) {
+      case StopType.BEZIER:
+        return stops.numStops;
+      case StopType.MANUAL:
+        return stops.values.length;
+    }
+  }
+
+  function updateNumStops(numStops: number) {
+    switch (stops.type) {
+      case StopType.BEZIER:
+        stops.numStops = numStops;
+        break;
+      case StopType.MANUAL:
+        stops.values.length = numStops;
+        break;
+    }
+  }
+
+  function updateBezierCurve(curve: Curve) {
+    if (stops.type !== "bezier") throw new Error("Need Bezier stops");
+    stops.curve = curve;
+  }
+
+  function addRamp() {
+    colorRamps.push(new ColorRamp());
+    colorRamps = colorRamps;
   }
 </script>
 
 <main>
-  <div class="settings">
-    <label>
-      <input type="checkbox" bind:checked={$state.useNewLightness}>
-      Use new lightness estimate
-    </label>
-  </div>
-  <button
-    class="input add-left"
-    title="Add to the right"
-    on:click={() => addStop(0, 0)}>+</button
-  >
-  <div class="stops">
-    {#each $state.tones as stop, i}
-      <div class="stop">
-        <input
-          type="text"
-          class="input"
-          inputmode="numeric"
-          pattern="\d*"
-          value={stop}
-          on:beforeinput={restrictStopInput}
-          on:keydown={(e) => handleStopKey(e, i)}
-          on:blur={(e) => validateAndUpdateStop(e.currentTarget, i)}
+  <header>
+    <h1>evolved palettes</h1>
+    {#if isEditing}
+      <sl-icon-button
+        name="x-circle"
+        label="Close settings"
+        on:click={() => (isEditing = false)}
+      />
+    {:else}
+      <sl-icon-button
+        name="gear"
+        label="Edit settings"
+        on:click={() => (isEditing = true)}
+      />
+    {/if}
+
+    <div class="settings">
+      {#if isEditing}
+        <SettingsEditor
+          stopType={stops.type}
+          colorSpaceType={colorSpaceType}
+          on:stopTypeChange={(e) => changeStopType(e.detail)}
+          on:colorSpaceTypeChange={(e) => colorSpaceType = e.detail}
         />
-        {#if $state.tones.length > 1}
-          <div class="remove">
-            <RemoveButton title="Remove stop" on:click={() => removeStop(i)} />
-          </div>
-        {/if}
+      {:else}
+        <SettingsPreview stopType={stops.type} {colorSpaceType} />
+      {/if}
+    </div>
+  </header>
+  {#if isEditing}
+    <div class="editor">
+      {#if stops.type === StopType.BEZIER}
+        <BezierStopsEditor
+          {stops}
+          {colorSpace}
+          on:update={(e) => (stops = e.detail)}
+        />
+      {:else if stops.type === StopType.MANUAL}
+        <ManualStopsEditor {stops} on:update={(e) => (stops = e.detail)} />
+      {/if}
+    </div>
+  {/if}
+  <div class="stops">
+    {#each actualStops as val}
+      <div class="name">
+        {Math.round(val * 10000) / 100}
       </div>
     {/each}
   </div>
-  <button
-    class="input add-right"
-    title="Add to the right"
-    on:click={() => addStop(100, $state.tones.length)}>+</button
-  >
 
-  {#each $state.defs as palette, i}
-    <article class="palette">
-      <header>
-        <input
-          type="text"
-          class="input"
-          value={palette.name}
-          on:input={(e) => renamePalette(i, e.currentTarget.value)}
-        />
-        {#if $state.defs.length > 1}
-          <div class="remove">
-            <RemoveButton
-              title="Remove palette"
-              on:click={() => removePalette(i)}
-            />
-          </div>
-        {/if}
-      </header>
-      <div class="palette-editor">
-        <div
-          class="ramp"
-          style:background={$palettes.get(palette.name).gradient}
-        />
-        <div class="palette-stops">
-          {#each $palettes.get(palette.name).stops as stop}
-            <div
-              class="palette-stop"
-              style:background-color={stop.color}
-              style:color={stop.labelColor}
-            >
-              <div class="tooltip">{stop.color}</div>
-            </div>
-          {/each}
-        </div>
-        <PaletteEditor
-          colors={palette.keyColors}
-          on:update={(ev) => updatePalette(i, ev.detail)}
-        />
-      </div>
-    </article>
+  {#each colorRamps as ramp, i}
+    <div class="color-editor">
+      <ColorRampEditor
+        name={ramp.name}
+        keyColors={ramp.keyColors}
+        on:updateName={(e) => {
+          ramp.name = e.detail;
+          colorRamps = colorRamps;
+        }}
+        on:addColor={() => {
+          ramp.addColor();
+          colorRamps = colorRamps;
+        }}
+        on:updateColor={(e) => {
+          const { index, color } = e.detail;
+          ramp.updateColor(index, color);
+          colorRamps = colorRamps;
+        }}
+        on:removeColor={(e) => {
+          ramp.removeColor(e.detail);
+          colorRamps = colorRamps;
+        }}
+        on:remove={() => {
+          if (colorRamps.length > 1) {
+            colorRamps.splice(i, 1);
+            colorRamps = colorRamps;
+          }
+        }}
+      />
+    </div>
+
+    <ColorRampView {ramp} {colorSpace} stops={actualStops} />
   {/each}
 
-  <button class="input add-palette" title="Add palette" on:click={addPalette}
-    >+</button
+  <sl-button
+    class="add-button"
+    size="small"
+    on:click={() => {
+      addRamp();
+    }}
   >
+    <sl-icon slot="prefix" name="plus-lg" />
+    Add
+  </sl-button>
 </main>
-
-<div class="export">
-  <h2><a href="https://huetone.ardov.me/">Huetone</a>-compatible JSON</h2>
-  <textarea readonly class="input">{$huetoneJson}</textarea>
-</div>
 
 <style>
   main {
     display: grid;
-    grid-template-columns: 12ch 2em 1fr 2em;
-    gap: 16px 4px;
+    gap: var(--sl-spacing-small) var(--sl-spacing-small);
+    grid-template-columns: 200px 1fr;
+    margin: 0 auto;
+    width: 800px; /* TODO: make it more responsive */
+  }
+
+  header {
+    display: grid;
+    grid-row: 1/3;
+    grid-template-columns: 1fr min-content;
+    grid-template-rows: min-content;
+    font-size: var(--sl-font-size-small);
+  }
+  header h1 {
+    align-self: center;
+    font-size: inherit;
+    line-height: 1;
   }
 
   .settings {
-    grid-column: span 4;
-    text-align: right;
+    grid-column: 1 / 3;
+    margin-top: var(--sl-spacing-2x-small);
   }
 
-  .export {
-    background-color: var(--neutral-40);
-    border-radius: 2px;
-    margin-top: 64px;
-    padding: 8px;
-  }
-  h2 {
-    font-size: 0.8rem;
-    font-weight: 500;
-    letter-spacing: 0.2em;
-  }
-  .export textarea {
-    border: 0;
-    color: var(--neutral-70);
-    margin-top: 8px;
-    width: 100%;
-    height: 20em;
+  .editor {
+    overflow: auto;
   }
 
   .stops {
     display: flex;
-    grid-column: 3 / 4;
+    align-self: end;
+    grid-row: 2;
   }
-  .stop {
-    position: relative;
+
+  .stops .name {
+    color: var(--sl-color-neutral-500);
+    font-family: var(--sl-font-mono);
+    font-size: var(--sl-font-size-2x-small);
     flex: 1;
-  }
-  .stop input {
-    box-sizing: border-box;
-    font-family: inherit;
-    font-size: 1.5rem;
     text-align: center;
-    width: 100%;
-    height: 2.5em;
-  }
-  .stop:not(:first-child) input {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-  }
-  .stop:not(:last-child) input {
-    border-right: 0;
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-  }
-  .stop input:focus {
-    border-color: var(--neutral-80);
-    box-shadow: 0 1px 5px var(--neutral-60);
-    outline: none;
-  }
-  .remove {
-    position: absolute;
-    left: 1px;
-    top: 1px;
-  }
-  .stop:not(:hover) .remove,
-  header:not(:hover) .remove {
-    display: none;
   }
 
-  .add-left {
-    grid-column: 2/3;
-  }
-  .add-right {
-    grid-column: 4/5;
-  }
-  .add-palette {
-    grid-column: 1/2;
-    height: 2em;
-  }
-
-  .palette {
-    display: contents;
-  }
-  header {
-    display: flex;
-    align-items: center;
-    grid-column: 1/2;
-    justify-content: center;
-    position: relative;
-  }
-  header input {
-    width: 100%;
-  }
-  .palette-editor {
-    grid-column: 3/4;
-  }
-  .palette-stops {
-    display: flex;
-    margin-bottom: 4px;
-  }
-  .palette-stop {
-    flex: 1;
-    height: 2.5em;
-    position: relative;
-  }
-  .palette-stop:not(:hover) .tooltip {
-    display: none;
-  }
-  .tooltip {
-    position: absolute;
-    white-space: nowrap;
-    font-size: 0.6rem;
-  }
-  .ramp {
-    height: 0.5em;
+  .color-editor {
+    grid-column: 1;
+    padding: var(--sl-spacing-medium) 0;
   }
 </style>

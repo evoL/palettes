@@ -1,8 +1,9 @@
 import Color from 'colorjs.io';
-import { contrast } from 'colorjs.io/fn';
 
-export function buildStops(keyColors: string[]): Color[] {
+export function buildRamp(keyColors: string[]): Color[] {
   const colors = keyColors.map(hex => new Color(hex).to('oklab'));
+
+  // Sort by lightness.
   colors.sort((a, b) => a.coords[0] - b.coords[0]);
 
   // Add start and end stops.
