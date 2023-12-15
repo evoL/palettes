@@ -146,7 +146,7 @@
     </div>
   </header>
   {#if isEditing}
-    <div class="editor">
+    <div class="stop-editor">
       {#if stops.type === StopType.BEZIER}
         <BezierStopsEditor
           {stops}
@@ -158,13 +158,6 @@
       {/if}
     </div>
   {/if}
-  <div class="stops">
-    {#each actualStops as val}
-      <div class="name">
-        {Math.round(val * 10000) / 100}
-      </div>
-    {/each}
-  </div>
 
   {#each colorRamps as ramp, i}
     <div class="color-editor">
@@ -197,7 +190,9 @@
       />
     </div>
 
-    <ColorRampView {ramp} {colorSpace} stops={actualStops} />
+    <div class="ramp-view">
+      <ColorRampView {ramp} {colorSpace} stops={actualStops} />
+    </div>
   {/each}
 
   <sl-button
@@ -218,12 +213,12 @@
     gap: var(--sl-spacing-small) var(--sl-spacing-small);
     grid-template-columns: 200px 1fr;
     margin: 0 auto;
-    width: 800px; /* TODO: make it more responsive */
+    max-width: 1280px;
+    padding: 0 var(--sl-spacing-medium);
   }
 
   header {
     display: grid;
-    grid-row: 1/3;
     grid-template-columns: 1fr min-content;
     grid-template-rows: min-content;
     font-size: var(--sl-font-size-small);
@@ -239,26 +234,23 @@
     margin-top: var(--sl-spacing-2x-small);
   }
 
-  .editor {
+  .stop-editor {
     overflow: auto;
-  }
-
-  .stops {
-    display: flex;
-    align-self: end;
-    grid-row: 2;
-  }
-
-  .stops .name {
-    color: var(--sl-color-neutral-500);
-    font-family: var(--sl-font-mono);
-    font-size: var(--sl-font-size-2x-small);
-    flex: 1;
-    text-align: center;
   }
 
   .color-editor {
     grid-column: 1;
     padding: var(--sl-spacing-medium) 0;
+  }
+
+  @media (max-width: 720px) {
+    main {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .add-button {
+      margin-top: var(--sl-spacing-medium);
+    }
   }
 </style>

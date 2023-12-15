@@ -12,7 +12,7 @@
   export let stops: BezierStops;
   export let colorSpace: ColorSpace;
   let width: number = 2137;
-  const HEIGHT = 100;
+  const HEIGHT = 140;
 
   let activePoint: 0 | 1 | 2 | 3 | undefined;
   $: viewBox = `0 0 ${width} ${HEIGHT}`;
@@ -116,6 +116,7 @@
       class:active={activePoint === 1}
       cx={renderedCurve[1].x}
       cy={renderedCurve[1].y}
+      r="5"
       on:mousedown={handleMouseDown}
     />
     <path
@@ -128,6 +129,7 @@
       class:active={activePoint === 2}
       cx={renderedCurve[2].x}
       cy={renderedCurve[2].y}
+      r="5"
       on:mousedown={handleMouseDown}
     />
 
@@ -170,10 +172,6 @@
   .handle {
     fill: #ff0;
     stroke: #000;
-    r: 4;
-  }
-  .handle:hover {
-    r: 6;
   }
   .curve {
     fill: none;

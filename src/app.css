@@ -6,7 +6,7 @@ body {
   font-family: var(--sl-font-sans);
 }
 
-h1, ul, li, dl, dt, dd {
+h1, h4, ul, li, dl, dt, dd {
   margin: 0;
   padding: 0;
 }

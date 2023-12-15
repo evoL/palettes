@@ -29,7 +29,7 @@
   {#if isEditing}
     <sl-input
       bind:this={nameInput}
-      class="name-input"
+      class="name input"
       value={name}
       placeholder="Cornflower Blue"
       on:sl-change={(e) => {
@@ -51,7 +51,7 @@
       }}
     />
   {:else}
-    <h1>{name}</h1>
+    <h1 class="name">{name}</h1>
     <sl-icon-button
       class="action action--edit"
       name="pencil"
@@ -113,7 +113,7 @@
   .editor {
     align-items: center;
     display: grid;
-    gap: var(--sl-spacing-x-small);
+    gap: var(--sl-spacing-2x-small) var(--sl-spacing-x-small);
     grid-template-columns: 1fr auto;
   }
 
@@ -129,15 +129,11 @@
     grid-column: 2;
   }
 
-  .editor:not(:hover) .action:not(.action--confirm) {
-    visibility: hidden;
-  }
-
   .action--remove {
     color: var(--sl-color-danger-600);
   }
 
-  .name-input {
+  .name.input {
     overflow: auto;
   }
 
@@ -166,5 +162,31 @@
 
   .key-color__picker::part(trigger)::before {
     box-shadow: inset 0 0 0 3px var(--sl-color-neutral-0);
+  }
+
+  @media (min-width: 720px) {
+    .editor:not(:hover) .action:not(.action--confirm) {
+      visibility: hidden;
+    }
+
+    .action--remove {
+      align-self: end;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .editor {
+      display: flex;
+    }
+    .name {
+      width: 40%;
+    }
+    ul {
+      flex: 1;
+      justify-content: flex-end;
+    }
+    .action {
+      order: 1;
+    }
   }
 </style>

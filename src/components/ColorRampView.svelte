@@ -14,6 +14,7 @@
       <ColorShade
         color={toSrgb(ramp.colorAt(val, colorSpace))}
         textColor={toSrgb(ramp.contrastColorAt(val, colorSpace))}
+        value={Math.round(val * 10000) / 100}
       />
     </div>
   {/each}
@@ -22,9 +23,15 @@
 <style>
   .ramp {
     display: flex;
+    flex-wrap: wrap;
+    gap: var(--sl-spacing-x-small) 0;
+    height: 100%;
+    width: 100%;
   }
 
   .ramp__shade {
     flex: 1;
+    min-height: 6em;
+    min-width: 2.5em;
   }
 </style>

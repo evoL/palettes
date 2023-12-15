@@ -1,6 +1,7 @@
 <script lang="ts">
   export let color: string;
   export let textColor: string;
+  export let value: number;
 
   let copyStatus: "copy" | "check-circle" = "copy";
 
@@ -28,30 +29,48 @@
   }
 </script>
 
-<div
-  class="shade"
-  role="button"
-  tabindex="0"
-  style:--color={color}
-  style:--text-color={textColor}
-  on:click={() => requestCopy(color)}
-  on:keyup={handleKeydown}
-  on:mouseleave={() => resetCopyStatus()}
->
-  <div class="overlay">
-    <span class="hex">{color}</span>
-    <sl-icon name={copyStatus} />
+<div class="shade">
+  <h4 class="value">{value}</h4>
+  <div
+    class="color"
+    role="button"
+    tabindex="0"
+    style:--color={color}
+    style:--text-color={textColor}
+    on:click={() => requestCopy(color)}
+    on:keyup={handleKeydown}
+    on:mouseleave={() => resetCopyStatus()}
+  >
+    <div class="overlay">
+      <span class="hex">{color}</span>
+      <sl-icon name={copyStatus} />
+    </div>
   </div>
 </div>
 
 <style>
   .shade {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sl-spacing-x-small);
+    height: 100%;
+    width: 100%;
+  }
+
+  .value {
+    color: var(--sl-color-neutral-500);
+    font-weight: normal;
+    font-family: var(--sl-font-mono);
+    font-size: var(--sl-font-size-2x-small);
+    text-align: center;
+  }
+
+  .color {
     background: var(--color);
     color: var(--text-color);
     cursor: pointer;
-    height: 100%;
+    flex: 1;
     position: relative;
-    width: 100%;
   }
 
   .overlay {
