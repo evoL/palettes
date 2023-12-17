@@ -107,6 +107,11 @@
     <path class="bg" d={`M0 0h${width}v${HEIGHT}H0z`} />
 
     <path
+      class="curve"
+      d={d("M", renderedCurve[0]) + d("C", ...renderedCurve.slice(1))}
+    />
+
+    <path
       class="guide"
       d={d("M", renderedCurve[0]) + d("L", renderedCurve[1])}
     />
@@ -116,6 +121,7 @@
       class:active={activePoint === 1}
       cx={renderedCurve[1].x}
       cy={renderedCurve[1].y}
+      transform-origin={`${renderedCurve[1].x} ${renderedCurve[1].y}`}
       r="5"
       on:mousedown={handleMouseDown}
     />
@@ -129,13 +135,9 @@
       class:active={activePoint === 2}
       cx={renderedCurve[2].x}
       cy={renderedCurve[2].y}
+      transform-origin={`${renderedCurve[2].x} ${renderedCurve[2].y}`}
       r="5"
       on:mousedown={handleMouseDown}
-    />
-
-    <path
-      class="curve"
-      d={d("M", renderedCurve[0]) + d("C", ...renderedCurve.slice(1))}
     />
   </svg>
 </div>
@@ -170,11 +172,16 @@
     stroke: #000;
   }
   .handle {
-    fill: #ff0;
+    fill: var(--sl-color-neutral-300);
     stroke: #000;
+    transition: transform var(--sl-transition-x-fast);
+  }
+  .handle:hover {
+    transform: scale(1.5);
   }
   .curve {
     fill: none;
-    stroke: #5e73eb;
+    stroke: var(--sl-color-primary-600);
+    stroke-width: 2px;
   }
 </style>
