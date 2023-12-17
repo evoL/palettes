@@ -7,8 +7,9 @@
   export let ramp: ColorRamp;
   export let colorSpace: ColorSpace;
   export let stops: number[] = [];
+  export let isInverted: boolean;
 
-  $: stopNames = nameStops(stops);
+  $: stopNames = nameStops(stops, isInverted);
 </script>
 
 <div class="ramp">

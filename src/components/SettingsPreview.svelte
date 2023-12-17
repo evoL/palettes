@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { COLOR_SPACE_TYPES, STOP_TYPES } from "../lib/display_names";
+  import { COLOR_SPACE_TYPES, LIGHT_OR_DARK, STOP_TYPES } from "../lib/display_names";
   import type { ColorSpaceType, StopType } from "../lib/types";
 
   export let stopType: StopType;
   export let colorSpaceType: ColorSpaceType;
+  export let isInverted: boolean;
 </script>
 
 <dl>
@@ -12,6 +13,9 @@
 
   <dt>Color space</dt>
   <dd>{COLOR_SPACE_TYPES[colorSpaceType]}</dd>
+
+  <dt>Order</dt>
+  <dd>{LIGHT_OR_DARK[+isInverted]}</dd>
 </dl>
 
 <style>

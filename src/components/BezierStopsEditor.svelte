@@ -11,13 +11,14 @@
 
   export let stops: BezierStops;
   export let colorSpace: ColorSpace;
+  export let isInverted: boolean;
   let width: number = 2137;
   const HEIGHT = 140;
 
   let activePoint: 0 | 1 | 2 | 3 | undefined;
   $: viewBox = `0 0 ${width} ${HEIGHT}`;
   $: renderedCurve = projectCurve(stops.curve, width);
-  $: lightnessGradient = generateLightnessGradient(colorSpace);
+  $: lightnessGradient = generateLightnessGradient(colorSpace, isInverted);
 
   function projectCurve(c: Curve, w: number): Curve {
     return c.map(({ x, y }) => ({

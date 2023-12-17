@@ -28,6 +28,7 @@
   };
   let colorRamps: ColorRamp[] = [new ColorRamp()];
   let colorSpaceType: ColorSpaceType = ColorSpaceType.OKLAB;
+  let isInverted = false;
   let isEditing = false;
 
   let actualStops: number[];
@@ -45,9 +46,9 @@
           curve[2].x,
           curve[2].y
         );
-        actualStops = Array.from({ length: numStops }).map((_, i) =>
-          easing(i / (numStops - 1))
-        );
+        const applyCurve = (i: number) => easing(i / (numStops - 1));
+        const mapFn = isInverted ? (i: number) => 1 - applyCurve(i) : applyCurve;
+        actualStops = Array.from({ length: numStops }).map((_, i) => mapFn(i));
         if (skipExtremes) {
           actualStops = actualStops.slice(1, -1);
         }
@@ -136,12 +137,14 @@
       {#if isEditing}
         <SettingsEditor
           stopType={stops.type}
-          colorSpaceType={colorSpaceType}
+          {colorSpaceType}
+          {isInverted}
           on:stopTypeChange={(e) => changeStopType(e.detail)}
           on:colorSpaceTypeChange={(e) => colorSpaceType = e.detail}
+          on:isInvertedChange={(e) => isInverted = e.detail}
         />
       {:else}
-        <SettingsPreview stopType={stops.type} {colorSpaceType} />
+        <SettingsPreview stopType={stops.type} {colorSpaceType} {isInverted} />
       {/if}
     </div>
   </header>
@@ -151,6 +154,7 @@
         <BezierStopsEditor
           {stops}
           {colorSpace}
+          {isInverted}
           on:update={(e) => (stops = e.detail)}
         />
       {:else if stops.type === StopType.MANUAL}
@@ -191,7 +195,7 @@
     </div>
 
     <div class="ramp-view">
-      <ColorRampView {ramp} {colorSpace} stops={actualStops} />
+      <ColorRampView {ramp} {colorSpace} {isInverted} stops={actualStops} />
     </div>
   {/each}
 

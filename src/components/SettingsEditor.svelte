@@ -1,15 +1,17 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import { COLOR_SPACE_TYPES, STOP_TYPES } from "../lib/display_names";
+  import { COLOR_SPACE_TYPES, LIGHT_OR_DARK, STOP_TYPES } from "../lib/display_names";
   import { ColorSpaceType, StopType } from "../lib/types";
 
   const dispatch = createEventDispatcher<{
     stopTypeChange: StopType;
     colorSpaceTypeChange: ColorSpaceType;
+    isInvertedChange: boolean;
   }>();
 
   export let stopType: StopType;
   export let colorSpaceType: ColorSpaceType;
+  export let isInverted: boolean;
 </script>
 
 <sl-select
@@ -34,6 +36,17 @@
   {#each Object.values(ColorSpaceType) as type}
     <sl-option value={type}>{COLOR_SPACE_TYPES[type]}</sl-option>
   {/each}
+</sl-select>
+
+<sl-select
+  class="control"
+  label="Order"
+  size="small"
+  value={String(isInverted)}
+  on:sl-change={(e) => dispatch("isInvertedChange", e.target.value === 'true')}
+>
+  <sl-option value="false">{LIGHT_OR_DARK[0]}</sl-option>
+  <sl-option value="true">{LIGHT_OR_DARK[1]}</sl-option>
 </sl-select>
 
 <style>

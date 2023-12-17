@@ -146,9 +146,12 @@ function generateRampRange(keyColors: ColorObject[], targetSpace: ColorSpace): R
   };
 }
 
-export function generateLightnessGradient(colorSpace: ColorSpace): string[] {
-  const start = convert(parse('#000'), colorSpace);
-  const end = convert(parse('#fff'), colorSpace);
+export function generateLightnessGradient(colorSpace: ColorSpace, isInverted = false): string[] {
+  const black = convert(parse('#000'), colorSpace);
+  const white = convert(parse('#fff'), colorSpace);
+  const start = isInverted ? white : black;
+  const end = isInverted ? black : white;
+
   return steps(start, end, { outputSpace: ColorSpace.get('srgb'), maxDeltaE: 3 }).map(color => display(color));
 }
 

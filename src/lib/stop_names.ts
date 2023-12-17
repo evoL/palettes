@@ -16,9 +16,11 @@ const MAX_NAME = 1000;
 // the best. Percentages didn't do the trick.
 const getStopThreshold = (multiplier: number) => Math.sqrt(multiplier) * 3;
 
-export function nameStops(lightness: number[]): number[] {
+export function nameStops(lightness: number[], isInverted = false): number[] {
   // Copy the input to remove already named values.
   const input = [...lightness];
+
+  const mapValue = isInverted ? (val: number) => 1 - val : (val: number) => val;
 
   // Maps the assigned name to the input value and the difference to the scaled value
   // without rounding. We'll use that to:
@@ -33,7 +35,7 @@ export function nameStops(lightness: number[]): number[] {
     let inputIndex = 0;
     for (let i = 0; i < input.length; i++) {
       const value = input[i];
-      const scaledValue = value * MAX_NAME;
+      const scaledValue = mapValue(value) * MAX_NAME;
       const name = Math.round(scaledValue / multiplier) * multiplier;
       inputIndex = lightness.indexOf(value, inputIndex);
 
@@ -61,11 +63,11 @@ export function nameStops(lightness: number[]): number[] {
   let inputIndex = 0;
   for (const value of input) {
     inputIndex = lightness.indexOf(value, inputIndex);
-    namedStops.set(Math.round(value * MAX_NAME), { value, diff: 0, inputIndex });
+    namedStops.set(Math.round(mapValue(value) * MAX_NAME), { value, diff: 0, inputIndex });
   }
 
   // The map has lost the initial ordering. Recover it using the input array.
   return [...namedStops.entries()]
-    .sort(([, a], [, b]) => lightness[a.inputIndex] - lightness[b.inputIndex])
+    .sort(([, a], [, b]) => a.inputIndex - b.inputIndex)
     .map(([name]) => name);
 }
