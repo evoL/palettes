@@ -59,7 +59,7 @@
     class="control"
     placeholder="Custom"
     size="small"
-    value={current}
+    value={current ?? ''}
     bind:this={selectEl}
     on:sl-change={(e) => dispatch("change", e.target.value)}
   >
