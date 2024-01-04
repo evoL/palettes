@@ -40,6 +40,10 @@ export class ColorRamp {
     return this.#keyColors;
   }
 
+  constructor(colors?: string[], public name: string = 'Color') {
+    this.#keyColors = colors?.length ? colors.map(c => this.#newModel(c)) : [new ColorModel(randomColor())];
+  }
+
   colorAt(lightness: number, space = ColorSpace.get('oklab')) {
     if (this.#colorSpace !== space) {
       this.#invalidate();
@@ -62,10 +66,6 @@ export class ColorRamp {
     return (darkContrast > lightContrast) ? this.#darkColor : this.#lightColor;
   }
 
-  constructor(colors?: string[], public name: string = 'Color') {
-    this.#keyColors = colors?.length ? colors.map(c => this.#newModel(c)) : [new ColorModel(randomColor())];
-  }
-
   addColor(): void {
     this.#keyColors.push(this.#keyColors[this.#keyColors.length - 1].clone());
     this.#invalidate();
@@ -80,6 +80,13 @@ export class ColorRamp {
   updateColor(index: number, color: string) {
     this.#keyColors[index] = this.#newModel(color);
     this.#invalidate();
+  }
+
+  toJSON() {
+    return {
+      name: this.name,
+      colors: this.#keyColors.map(c => c.toString()),
+    };
   }
 
   #invalidate(): void {

@@ -16,6 +16,9 @@
   } from "./lib/types";
   import { ColorRamp } from "./lib/colors";
   import { CURVES } from "./lib/presets";
+  import { afterUpdate, onMount } from "svelte";
+
+  const STORAGE_KEY = "evolved_palettes";
 
   let stops: Stops = {
     type: StopType.BEZIER,
@@ -26,9 +29,12 @@
   let colorSpaceType: ColorSpaceType = ColorSpaceType.OKLAB;
   let isInverted = false;
   let isEditing = false;
+  let initialFetchDone = false;
 
   let actualStops: number[];
   let colorSpace: ColorSpace;
+
+  // Derived state
 
   $: colorSpace = ColorSpace.get(colorSpaceType);
   $: {
@@ -58,6 +64,43 @@
     }
   }
 
+  // Storage
+
+  onMount(() => {
+    const content = localStorage.getItem(STORAGE_KEY);
+    if (content != null) {
+      try {
+        const serialized = JSON.parse(content);
+
+        stops = serialized.stops;
+        colorRamps = serialized.colorRamps.map(
+          ({ name, colors }) => new ColorRamp(colors, name)
+        );
+        colorSpaceType = serialized.colorSpaceType;
+        isInverted = serialized.isInverted;
+      } catch (e: unknown) {
+        // welp
+      }
+    }
+
+    initialFetchDone = true;
+  });
+
+  $: {
+    if (initialFetchDone) {
+      const serialized = {
+        stops,
+        colorRamps,
+        colorSpaceType,
+        isInverted,
+      };
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(serialized));
+    }
+  }
+
+  // Functions
+
   function changeStopType(type: StopType) {
     if (stops.type === type) return;
 
@@ -66,12 +109,7 @@
         stops = {
           type,
           numStops: getNumStops(),
-          curve: [
-            { x: 0, y: 0 },
-            { x: 0.25, y: 0 },
-            { x: 0.6, y: 1 },
-            { x: 1, y: 1 },
-          ],
+          curve: CURVES["default"].content,
         };
         break;
       case StopType.MANUAL:
@@ -90,22 +128,6 @@
       case StopType.MANUAL:
         return stops.values.length;
     }
-  }
-
-  function updateNumStops(numStops: number) {
-    switch (stops.type) {
-      case StopType.BEZIER:
-        stops.numStops = numStops;
-        break;
-      case StopType.MANUAL:
-        stops.values.length = numStops;
-        break;
-    }
-  }
-
-  function updateBezierCurve(curve: Curve) {
-    if (stops.type !== "bezier") throw new Error("Need Bezier stops");
-    stops.curve = curve;
   }
 
   function addRamp() {
