@@ -14,7 +14,8 @@ import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import App from './App.svelte'
 import { ColorSpace, OKLab, LCH, P3, sRGB, Lab } from 'colorjs.io/fn';
 
-setBasePath('/')
+const baseUrl = new URL(document.baseURI);
+setBasePath(baseUrl.pathname);
 
 ColorSpace.register(Lab);
 ColorSpace.register(LCH);
