@@ -52,12 +52,14 @@
     />
   {:else}
     <h1 class="name">{name}</h1>
-    <sl-icon-button
-      class="action action--edit"
-      name="pencil"
-      label="Edit name"
-      on:click={() => (isEditing = true)}
-    />
+    <sl-tooltip content="Edit name">
+      <sl-icon-button
+        class="action action--edit"
+        name="pencil"
+        label="Edit name"
+        on:click={() => (isEditing = true)}
+      />
+    </sl-tooltip>
   {/if}
 
   <ul>
@@ -99,14 +101,16 @@
     </li>
   </ul>
 
-  <sl-icon-button
-    class="action action--remove"
-    name="trash"
-    label="Remove ramp"
-    on:click={() => {
-      dispatch("remove");
-    }}
-  />
+  <sl-tooltip content="Remove">
+    <sl-icon-button
+      class="action action--remove"
+      name="trash"
+      label="Remove ramp"
+      on:click={() => {
+        dispatch("remove");
+      }}
+    />
+  </sl-tooltip>
 </div>
 
 <style>

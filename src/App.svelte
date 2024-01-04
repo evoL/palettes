@@ -146,11 +146,13 @@
         on:click={() => (isEditing = false)}
       />
     {:else}
-      <sl-icon-button
-        name="gear"
-        label="Edit settings"
-        on:click={() => (isEditing = true)}
-      />
+      <sl-tooltip content="Edit settings">
+        <sl-icon-button
+          name="gear"
+          label="Edit settings"
+          on:click={() => (isEditing = true)}
+        />
+      </sl-tooltip>
     {/if}
 
     <div class="settings">
