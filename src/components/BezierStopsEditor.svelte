@@ -1,9 +1,19 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import type { BezierStops, Curve, Point } from "../lib/types";
   import throttle from "lodash-es/throttle";
   import { type ColorSpace } from "colorjs.io/fn";
+
+  import type { BezierStops, Curve, Point } from "../lib/types";
   import { generateLightnessGradient } from "../lib/colors";
+  import {
+    CURVES,
+    CURVE_LIST,
+    USER_CURVES,
+    findCurvePreset,
+    getPresetList,
+  } from "../lib/presets";
+
+  import PresetForm from "./PresetForm.svelte";
 
   const dispatch = createEventDispatcher<{
     update: BezierStops;
@@ -19,6 +29,9 @@
   $: viewBox = `0 0 ${width} ${HEIGHT}`;
   $: renderedCurve = projectCurve(stops.curve, width);
   $: lightnessGradient = generateLightnessGradient(colorSpace, isInverted);
+
+  $: userCurveList = getPresetList($USER_CURVES);
+  $: curvePreset = findCurvePreset(stops.curve, userCurveList, CURVE_LIST);
 
   function projectCurve(c: Curve, w: number): Curve {
     return c.map(({ x, y }) => ({
@@ -58,12 +71,12 @@
     dispatchUpdate();
   }
 
+  function update(change: Partial<BezierStops>) {
+    dispatch("update", { ...stops, ...change });
+  }
+
   const dispatchUpdate = throttle(
-    () =>
-      dispatch("update", {
-        ...stops,
-        curve: unprojectCurve(renderedCurve, width),
-      }),
+    () => update({ curve: unprojectCurve(renderedCurve, width) }),
     66 // 15 FPS
   );
 
@@ -74,6 +87,27 @@
 
 <svelte:window on:mouseup={handleMouseUp} />
 
+<PresetForm
+  builtins={CURVE_LIST}
+  userPresets={userCurveList}
+  current={curvePreset?.id}
+  label="Curve preset"
+  saveLabel="Save curve"
+  on:change={(e) =>
+    update({ curve: ($USER_CURVES[e.detail] ?? CURVES[e.detail]).content })}
+  on:save={(e) => {
+    USER_CURVES.add({
+      ...e.detail,
+      content: unprojectCurve(renderedCurve, width),
+    });
+  }}
+  on:rename={(e) => {
+    const { id, name } = e.detail;
+    USER_CURVES.update(id, (preset) => ({ ...preset, name }));
+  }}
+  on:delete={(e) => USER_CURVES.delete(e.detail)}
+/>
+
 <sl-input
   class="num-stops"
   type="number"
@@ -81,15 +115,13 @@
   label="Number of stops"
   min={stops.skipExtremes ? 1 : 3}
   value={stops.numStops}
-  on:sl-change={(e) =>
-    dispatch("update", { ...stops, numStops: Number(e.target.value) })}
+  on:sl-change={(e) => update({ numStops: Number(e.target.value) })}
 />
 <sl-checkbox
   size="small"
   checked={stops.skipExtremes}
   on:sl-change={(e) =>
-    dispatch("update", {
-      ...stops,
+    update({
       skipExtremes: e.target.checked,
       numStops: Math.max(e.target.checked ? 1 : 3, stops.numStops),
     })}>Exclude black and white</sl-checkbox
@@ -100,7 +132,10 @@
     <defs>
       <linearGradient id="gradient" x1="0" y1="1" x2="0" y2="0">
         {#each lightnessGradient as color, i}
-          <stop offset={i / (lightnessGradient.length - 1)} stop-color={color} />
+          <stop
+            offset={i / (lightnessGradient.length - 1)}
+            stop-color={color}
+          />
         {/each}
       </linearGradient>
     </defs>
@@ -146,8 +181,7 @@
 <style>
   .num-stops {
     display: inline-block;
-    margin-right: var(--sl-spacing-medium);
-    margin-bottom: var(--sl-spacing-small);
+    margin: var(--sl-spacing-x-small) var(--sl-spacing-medium) var(--sl-spacing-small) 0;
   }
 
   .num-stops::part(form-control) {

@@ -15,16 +15,12 @@
     ColorSpaceType,
   } from "./lib/types";
   import { ColorRamp } from "./lib/colors";
+  import { CURVES } from "./lib/presets";
 
   let stops: Stops = {
     type: StopType.BEZIER,
     numStops: 13,
-    curve: [
-      { x: 0, y: 0 },
-      { x: 0.25, y: 0 },
-      { x: 0.6, y: 1 },
-      { x: 1, y: 1 },
-    ],
+    curve: CURVES["default"].content,
   };
   let colorRamps: ColorRamp[] = [new ColorRamp()];
   let colorSpaceType: ColorSpaceType = ColorSpaceType.OKLAB;
@@ -47,7 +43,9 @@
           curve[2].y
         );
         const applyCurve = (i: number) => easing(i / (numStops - 1));
-        const mapFn = isInverted ? (i: number) => 1 - applyCurve(i) : applyCurve;
+        const mapFn = isInverted
+          ? (i: number) => 1 - applyCurve(i)
+          : applyCurve;
         actualStops = Array.from({ length: numStops }).map((_, i) => mapFn(i));
         if (skipExtremes) {
           actualStops = actualStops.slice(1, -1);
@@ -140,8 +138,8 @@
           {colorSpaceType}
           {isInverted}
           on:stopTypeChange={(e) => changeStopType(e.detail)}
-          on:colorSpaceTypeChange={(e) => colorSpaceType = e.detail}
-          on:isInvertedChange={(e) => isInverted = e.detail}
+          on:colorSpaceTypeChange={(e) => (colorSpaceType = e.detail)}
+          on:isInvertedChange={(e) => (isInverted = e.detail)}
         />
       {:else}
         <SettingsPreview stopType={stops.type} {colorSpaceType} {isInverted} />

@@ -10,6 +10,7 @@ import '@shoelace-style/shoelace/dist/components/option/option.js';
 import '@shoelace-style/shoelace/dist/components/radio-group/radio-group.js';
 import '@shoelace-style/shoelace/dist/components/select/select.js';
 import '@shoelace-style/shoelace/dist/components/tag/tag.js';
+import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import App from './App.svelte'
 import { ColorSpace, OKLab, LCH, P3, sRGB, Lab } from 'colorjs.io/fn';
 
