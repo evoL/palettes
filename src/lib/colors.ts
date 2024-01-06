@@ -1,4 +1,4 @@
-import { ColorSpace, parse, to as convert, range, serialize, contrast, steps, display } from "colorjs.io/fn";
+import { ColorSpace, parse, to as convert, toGamut, range, serialize, contrast, steps, display } from "colorjs.io/fn";
 import type { ColorObject } from "colorjs.io/types/src/color";
 
 export class ColorModel {
@@ -105,7 +105,9 @@ export function toSrgb(color: ColorModel | ColorObject): string {
   if (color instanceof ColorModel) {
     return color.toSrgb();
   }
-  const inSrgb = convert(color, ColorSpace.get('srgb'), { inGamut: true });
+  const srgb = ColorSpace.get('srgb');
+  const inGamut = toGamut(color, {space: srgb});
+  const inSrgb = convert(inGamut, srgb);
   return serialize(inSrgb, { format: 'hex' });
 }
 
@@ -141,7 +143,11 @@ function generateRampRange(keyColors: ColorObject[], targetSpace: ColorSpace): R
       return { start: 1, end: 1, range: () => stop };
     }
     const bL = stops[i + 1].coords[0];
-    return { start: aL, end: bL, range: range(stop, stops[i + 1]) };
+    return {
+      start: aL,
+      end: bL,
+      range: range(stop, stops[i + 1], { space: targetSpace }),
+    };
   });
 
   return (percentage) => {

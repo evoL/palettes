@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ColorSpace } from "colorjs.io/fn";
+  // import * as colorjs from "colorjs.io/fn";
   import { toSrgb, type ColorRamp } from "../lib/colors";
   import ColorShade from "./ColorShade.svelte";
   import { nameStops } from "../lib/stop_names";
@@ -13,6 +14,7 @@
 </script>
 
 <div class="ramp">
+  <!-- {@debug ramp, colorSpace, colorjs} -->
   {#each stops as val, i}
     <div class="ramp__shade">
       <ColorShade

@@ -12,7 +12,7 @@ import '@shoelace-style/shoelace/dist/components/select/select.js';
 import '@shoelace-style/shoelace/dist/components/tag/tag.js';
 import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
 import App from './App.svelte'
-import { ColorSpace, OKLab, LCH, P3, sRGB, Lab } from 'colorjs.io/fn';
+import { ColorSpace, OKLab, LCH, P3, sRGB, Lab, OKLCH } from 'colorjs.io/fn';
 
 const baseUrl = new URL(document.baseURI);
 setBasePath(baseUrl.pathname);
@@ -20,6 +20,7 @@ setBasePath(baseUrl.pathname);
 ColorSpace.register(Lab);
 ColorSpace.register(LCH);
 ColorSpace.register(OKLab);
+ColorSpace.register(OKLCH);
 ColorSpace.register(P3);
 ColorSpace.register(sRGB);
 
