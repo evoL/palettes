@@ -20,7 +20,8 @@
       <ColorShade
         color={toSrgb(ramp.colorAt(val, colorSpace))}
         textColor={toSrgb(ramp.contrastColorAt(val, colorSpace))}
-        value={stopNames[i]}
+        name={stopNames[i]}
+        value={stops[i]}
       />
     </div>
   {/each}

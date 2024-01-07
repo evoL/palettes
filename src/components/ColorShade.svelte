@@ -2,6 +2,7 @@
   export let color: string;
   export let textColor: string;
   export let value: number;
+  export let name: string|undefined = undefined;
 
   let copyStatus: "copy" | "check-circle" = "copy";
 
@@ -30,7 +31,14 @@
 </script>
 
 <div class="shade">
-  <h4 class="value">{value}</h4>
+  <h4 class="label">
+    <sl-icon name="lightbulb" label="Lightness" />
+    <span>{Math.round(value * 10000) / 100}</span>
+    {#if name}
+      <sl-icon name="bookmark" label="Tone" />
+      <span>{name}</span>
+    {/if}
+  </h4>
   <div
     class="color"
     role="button"
@@ -57,12 +65,16 @@
     width: 100%;
   }
 
-  .value {
+  .label {
+    align-items: center;
     color: var(--sl-color-neutral-500);
+    display: grid;
+    gap: 0 var(--sl-spacing-2x-small);
+    grid-template-columns: auto auto;
     font-weight: normal;
     font-family: var(--sl-font-mono);
     font-size: var(--sl-font-size-2x-small);
-    text-align: center;
+    justify-content: center;
   }
 
   .color {

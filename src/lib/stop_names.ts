@@ -69,5 +69,5 @@ export function nameStops(lightness: number[], isInverted = false): number[] {
   // The map has lost the initial ordering. Recover it using the input array.
   return [...namedStops.entries()]
     .sort(([, a], [, b]) => a.inputIndex - b.inputIndex)
-    .map(([name]) => name);
+    .map(([name]) => `${name}`);
 }
