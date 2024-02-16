@@ -20,7 +20,7 @@
     "vite": "^4.3.9"
   },
   "dependencies": {
-    "@shoelace-style/shoelace": "^2.12.0",
+    "@shoelace-style/shoelace": "^2.14.0",
     "bezier-easing": "^2.1.0",
     "colorjs.io": "color-js/color.js#c04f61c",
     "lodash-es": "^4.17.21"
