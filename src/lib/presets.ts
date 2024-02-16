@@ -77,6 +77,26 @@ export const CURVES: Presets<Curve> = {
     name: 'Default',
     content: [
       { x: 0, y: 0 },
+      { x: 0.6910112359550562, y: 0.4285714285714286 },
+      { x: 0.351123595505618, y: 0.8142857142857143 },
+      { x: 1, y: 1 }
+    ],
+  },
+  'linear': {
+    id: 'linear',
+    name: 'Linear',
+    content: [
+      { x: 0, y: 0 },
+      { x: 0.25, y: 0.25 },
+      { x: 0.75, y: 0.75 },
+      { x: 1, y: 1 }
+    ],
+  },
+  'old_default': {
+    id: 'old_default',
+    name: 'Old Default',
+    content: [
+      { x: 0, y: 0 },
       {
         x: 0.41225165562913907,
         y: 0.16428571428571426
