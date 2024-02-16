@@ -5,6 +5,7 @@
   import BezierStopsEditor from "./components/BezierStopsEditor.svelte";
   import ColorRampEditor from "./components/ColorRampEditor.svelte";
   import ColorRampView from "./components/ColorRampView.svelte";
+  import ExportButton from "./components/ExportButton.svelte";
   import SettingsEditor from "./components/SettingsEditor.svelte";
   import SettingsPreview from "./components/SettingsPreview.svelte";
   import ManualStopsEditor from "./components/ManualStopsEditor.svelte";
@@ -16,7 +17,8 @@
   } from "./lib/types";
   import { ColorRamp } from "./lib/colors";
   import { CURVES } from "./lib/presets";
-  import { afterUpdate, onMount } from "svelte";
+  import { nameStops } from "./lib/stop_names";
+  import { onMount } from "svelte";
 
   const STORAGE_KEY = "evolved_palettes";
 
@@ -32,6 +34,7 @@
   let initialFetchDone = false;
 
   let actualStops: number[];
+  let stopNames: string[];
   let colorSpace: ColorSpace;
 
   // Derived state
@@ -46,7 +49,7 @@
           curve[1].x,
           curve[1].y,
           curve[2].x,
-          curve[2].y
+          curve[2].y,
         );
         const applyCurve = (i: number) => easing(i / (numStops - 1));
         const mapFn = isInverted
@@ -63,6 +66,7 @@
         break;
     }
   }
+  $: stopNames = nameStops(actualStops, isInverted);
 
   // Storage
 
@@ -74,7 +78,7 @@
 
         stops = serialized.stops;
         colorRamps = serialized.colorRamps.map(
-          ({ name, colors }) => new ColorRamp(colors, name)
+          ({ name, colors }) => new ColorRamp(colors, name),
         );
         colorSpaceType = serialized.colorSpaceType;
         isInverted = serialized.isInverted;
@@ -168,6 +172,10 @@
       {:else}
         <SettingsPreview stopType={stops.type} {colorSpaceType} {isInverted} />
       {/if}
+
+      <div class="export-button">
+        <ExportButton ramps={colorRamps} stops={actualStops} {stopNames} {colorSpace} />
+      </div>
     </div>
   </header>
   {#if isEditing}
@@ -217,7 +225,7 @@
     </div>
 
     <div class="ramp-view">
-      <ColorRampView {ramp} {colorSpace} {isInverted} stops={actualStops} />
+      <ColorRampView {ramp} {colorSpace} {stopNames} stops={actualStops} />
     </div>
   {/each}
 
@@ -258,6 +266,10 @@
   .settings {
     grid-column: 1 / 3;
     margin-top: var(--sl-spacing-2x-small);
+  }
+
+  .export-button {
+    margin-top: var(--sl-spacing-small);
   }
 
   .stop-editor {

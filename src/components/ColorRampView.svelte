@@ -2,16 +2,13 @@
   import { ColorSpace } from "colorjs.io/fn";
   import { toSrgb, type ColorRamp, getOutputLightness } from "../lib/colors";
   import ColorShade from "./ColorShade.svelte";
-  import { nameStops } from "../lib/stop_names";
 
   export let ramp: ColorRamp;
   export let colorSpace: ColorSpace;
   export let stops: number[] = [];
-  export let isInverted: boolean;
+  export let stopNames: string[] = [];
 
   const srgb = ColorSpace.get('srgb');
-
-  $: stopNames = nameStops(stops, isInverted);
 </script>
 
 <div class="ramp">
