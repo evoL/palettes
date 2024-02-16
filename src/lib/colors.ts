@@ -1,19 +1,19 @@
-import { ColorSpace, parse, to as convert, toGamut, range, serialize, contrast, steps, display } from "colorjs.io/fn";
+import { ColorSpace, get as getCoord, parse, to as convert, toGamut, range, serialize, contrast, steps, display } from "colorjs.io/fn";
 import type { ColorObject } from "colorjs.io/types/src/color";
 
 export class ColorModel {
   #color: ColorObject;
-  #srgbValue?: string;
+  #inGamut?: ColorObject;
   
   constructor(color: ColorObject) {
     this.#color = color;
   }
 
-  toSrgb(): string {
-    if (this.#srgbValue == null) {
-      this.#srgbValue = toSrgb(this.#color);
+  inGamut(space: ColorSpace): ColorObject {
+    if (this.#inGamut == null) {
+      this.#inGamut = toGamut(this.#color, {space});
     }
-    return this.#srgbValue;
+    return this.#inGamut;
   }
 
   clone(): ColorModel {
@@ -102,13 +102,15 @@ export class ColorRamp {
 }
 
 export function toSrgb(color: ColorModel | ColorObject): string {
-  if (color instanceof ColorModel) {
-    return color.toSrgb();
-  }
   const srgb = ColorSpace.get('srgb');
-  const inGamut = toGamut(color, {space: srgb});
+  const inGamut = (color instanceof ColorModel) ? color.inGamut(srgb) : toGamut(color, {space: srgb});
   const inSrgb = convert(inGamut, srgb);
   return serialize(inSrgb, { format: 'hex' });
+}
+
+export function getOutputLightness(color: ColorModel | ColorObject, space: ColorSpace) {
+  const inGamut = (color instanceof ColorModel) ? color.inGamut(space) : toGamut(color, {space});
+  return getCoord(inGamut, 'l');
 }
 
 function randomColor(): ColorObject {

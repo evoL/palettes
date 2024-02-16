@@ -1,7 +1,6 @@
 <script lang="ts">
-  import type { ColorSpace } from "colorjs.io/fn";
-  // import * as colorjs from "colorjs.io/fn";
-  import { toSrgb, type ColorRamp } from "../lib/colors";
+  import { ColorSpace } from "colorjs.io/fn";
+  import { toSrgb, type ColorRamp, getOutputLightness } from "../lib/colors";
   import ColorShade from "./ColorShade.svelte";
   import { nameStops } from "../lib/stop_names";
 
@@ -10,18 +9,20 @@
   export let stops: number[] = [];
   export let isInverted: boolean;
 
+  const srgb = ColorSpace.get('srgb');
+
   $: stopNames = nameStops(stops, isInverted);
 </script>
 
 <div class="ramp">
-  <!-- {@debug ramp, colorSpace, colorjs} -->
   {#each stops as val, i}
+    {@const color = ramp.colorAt(val, colorSpace)}
     <div class="ramp__shade">
       <ColorShade
-        color={toSrgb(ramp.colorAt(val, colorSpace))}
+        color={toSrgb(color)}
         textColor={toSrgb(ramp.contrastColorAt(val, colorSpace))}
         name={stopNames[i]}
-        value={stops[i]}
+        value={getOutputLightness(color, srgb)}
       />
     </div>
   {/each}

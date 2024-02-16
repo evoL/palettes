@@ -16,7 +16,7 @@ const MAX_NAME = 1000;
 // the best. Percentages didn't do the trick.
 const getStopThreshold = (multiplier: number) => Math.sqrt(multiplier) * 3;
 
-export function nameStops(lightness: number[], isInverted = false): number[] {
+export function nameStops(lightness: number[], isInverted = false): string[] {
   // Copy the input to remove already named values.
   const input = [...lightness];
 
