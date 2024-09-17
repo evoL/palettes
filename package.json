@@ -10,19 +10,19 @@
     "check": "svelte-check --tsconfig ./tsconfig.json"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^2.4.1",
+    "@sveltejs/vite-plugin-svelte": "^2.5.3",
     "@tsconfig/svelte": "^4.0.1",
     "@types/lodash-es": "^4.17.12",
-    "svelte": "^4.0.0",
-    "svelte-check": "^3.4.3",
-    "tslib": "^2.5.0",
-    "typescript": "^5.0.2",
-    "vite": "^4.3.9"
+    "svelte": "^4.2.19",
+    "svelte-check": "^3.8.6",
+    "tslib": "^2.7.0",
+    "typescript": "^5.6.2",
+    "vite": "^4.5.5"
   },
   "dependencies": {
-    "@shoelace-style/shoelace": "^2.14.0",
+    "@shoelace-style/shoelace": "^2.16.0",
     "bezier-easing": "^2.1.0",
-    "colorjs.io": "color-js/color.js#c04f61c",
+    "colorjs.io": "github:color-js/color.js#c04f61c",
     "lodash-es": "^4.17.21",
     "lz-string": "^1.5.0"
   }
