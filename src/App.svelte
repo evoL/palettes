@@ -9,42 +9,69 @@
   import SettingsEditor from "./components/SettingsEditor.svelte";
   import SettingsPreview from "./components/SettingsPreview.svelte";
   import ManualStopsEditor from "./components/ManualStopsEditor.svelte";
-  import {
-    StopType,
-    type Curve,
-    type Stops,
-    ColorSpaceType,
-  } from "./lib/types";
+  import { StopType, type PersistedProjects } from "./lib/types";
   import { ColorRamp } from "./lib/colors";
   import { CURVES } from "./lib/presets";
   import { nameStops } from "./lib/stop_names";
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
+  import { projectStore, store, updateProject } from "./lib/model";
+  import {
+    fromPersisted,
+    loadProjects,
+    saveProjects,
+    toPersisted,
+  } from "./lib/storage";
+  import { type Unsubscriber } from "svelte/store";
 
-  const STORAGE_KEY = "evolved_palettes";
-
-  let stops: Stops = {
-    type: StopType.BEZIER,
-    numStops: 13,
-    curve: CURVES["default"].content,
-  };
-  let colorRamps: ColorRamp[] = [new ColorRamp()];
-  let colorSpaceType: ColorSpaceType = ColorSpaceType.OKLAB;
-  let isInverted = false;
   let isEditing = false;
   let initialFetchDone = false;
+  let unsubscribePersistence: Unsubscriber;
 
   let actualStops: number[];
   let stopNames: string[];
   let colorSpace: ColorSpace;
 
+  // Storage
+
+  onMount(() => {
+    const persisted = loadProjects();
+    if (persisted != null) {
+      store.set({
+        projects: persisted.projects.map(fromPersisted),
+        activeIndex: persisted.activeIndex,
+      });
+    }
+
+    // Initialize color ramps — they are empty by default.
+    if (!$projectStore.colorRamps.length) {
+      addRamp();
+    }
+
+    unsubscribePersistence = store.subscribe((state) => {
+      if (!initialFetchDone) return;
+
+      const persisted: PersistedProjects = {
+        projects: state.projects.map(toPersisted),
+        activeIndex: state.activeIndex,
+      };
+      saveProjects(persisted);
+    });
+
+    initialFetchDone = true;
+  });
+
+  onDestroy(() => {
+    if (unsubscribePersistence) unsubscribePersistence();
+  });
+
   // Derived state
 
-  $: colorSpace = ColorSpace.get(colorSpaceType);
+  $: colorSpace = ColorSpace.get($projectStore.colorSpaceType);
   $: {
-    switch (stops.type) {
+    switch ($projectStore.stops.type) {
       case StopType.BEZIER: {
-        const { curve, skipExtremes } = stops;
-        const numStops = stops.numStops + (skipExtremes ? 2 : 0);
+        const { curve, skipExtremes } = $projectStore.stops;
+        const numStops = $projectStore.stops.numStops + (skipExtremes ? 2 : 0);
         const easing = BezierEasing(
           curve[1].x,
           curve[1].y,
@@ -52,7 +79,7 @@
           curve[2].y,
         );
         const applyCurve = (i: number) => easing(i / (numStops - 1));
-        const mapFn = isInverted
+        const mapFn = $projectStore.isInverted
           ? (i: number) => 1 - applyCurve(i)
           : applyCurve;
         actualStops = Array.from({ length: numStops }).map((_, i) => mapFn(i));
@@ -62,81 +89,51 @@
         break;
       }
       case StopType.MANUAL:
-        actualStops = stops.values;
+        actualStops = $projectStore.stops.values;
         break;
     }
   }
-  $: stopNames = nameStops(actualStops, isInverted);
-
-  // Storage
-
-  onMount(() => {
-    const content = localStorage.getItem(STORAGE_KEY);
-    if (content != null) {
-      try {
-        const serialized = JSON.parse(content);
-
-        stops = serialized.stops;
-        colorRamps = serialized.colorRamps.map(
-          ({ name, colors }) => new ColorRamp(colors, name),
-        );
-        colorSpaceType = serialized.colorSpaceType;
-        isInverted = serialized.isInverted;
-      } catch (e: unknown) {
-        // welp
-      }
-    }
-
-    initialFetchDone = true;
-  });
-
-  $: {
-    if (initialFetchDone) {
-      const serialized = {
-        stops,
-        colorRamps,
-        colorSpaceType,
-        isInverted,
-      };
-
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(serialized));
-    }
-  }
+  $: stopNames = nameStops(actualStops, $projectStore.isInverted);
 
   // Functions
 
   function changeStopType(type: StopType) {
-    if (stops.type === type) return;
+    if ($projectStore.stops.type === type) return;
 
     switch (type) {
       case StopType.BEZIER:
-        stops = {
-          type,
-          numStops: getNumStops(),
-          curve: CURVES["default"].content,
-        };
+        updateProject({
+          stops: {
+            type,
+            numStops: getNumStops(),
+            curve: CURVES["default"].content,
+          },
+        });
         break;
       case StopType.MANUAL:
-        stops = {
-          type,
-          values: [...actualStops],
-        };
+        updateProject({
+          stops: {
+            type,
+            values: [...actualStops],
+          },
+        });
         break;
     }
   }
 
   function getNumStops() {
-    switch (stops.type) {
+    switch ($projectStore.stops.type) {
       case StopType.BEZIER:
-        return stops.numStops;
+        return $projectStore.stops.numStops;
       case StopType.MANUAL:
-        return stops.values.length;
+        return $projectStore.stops.values.length;
     }
   }
 
   function addRamp() {
-    colorRamps.push(new ColorRamp());
-    colorRamps = colorRamps;
+    updateProject({
+      colorRamps: [...$projectStore.colorRamps, new ColorRamp()],
+    });
   }
 </script>
 
@@ -162,63 +159,77 @@
     <div class="settings">
       {#if isEditing}
         <SettingsEditor
-          stopType={stops.type}
-          {colorSpaceType}
-          {isInverted}
+          stopType={$projectStore.stops.type}
+          colorSpaceType={$projectStore.colorSpaceType}
+          isInverted={$projectStore.isInverted}
           on:stopTypeChange={(e) => changeStopType(e.detail)}
-          on:colorSpaceTypeChange={(e) => (colorSpaceType = e.detail)}
-          on:isInvertedChange={(e) => (isInverted = e.detail)}
+          on:colorSpaceTypeChange={(e) =>
+            updateProject({ colorSpaceType: e.detail })}
+          on:isInvertedChange={(e) => updateProject({ isInverted: e.detail })}
         />
       {:else}
-        <SettingsPreview stopType={stops.type} {colorSpaceType} {isInverted} />
+        <SettingsPreview
+          stopType={$projectStore.stops.type}
+          colorSpaceType={$projectStore.colorSpaceType}
+          isInverted={$projectStore.isInverted}
+        />
       {/if}
 
       <div class="export-button">
-        <ExportButton ramps={colorRamps} stops={actualStops} {stopNames} {colorSpace} />
+        <ExportButton
+          ramps={$projectStore.colorRamps}
+          stops={actualStops}
+          {stopNames}
+          {colorSpace}
+        />
       </div>
     </div>
   </header>
   {#if isEditing}
     <div class="stop-editor">
-      {#if stops.type === StopType.BEZIER}
+      {#if $projectStore.stops.type === StopType.BEZIER}
         <BezierStopsEditor
-          {stops}
+          stops={$projectStore.stops}
           {colorSpace}
-          {isInverted}
-          on:update={(e) => (stops = e.detail)}
+          isInverted={$projectStore.isInverted}
+          on:update={(e) => updateProject({ stops: e.detail })}
         />
-      {:else if stops.type === StopType.MANUAL}
-        <ManualStopsEditor {stops} on:update={(e) => (stops = e.detail)} />
+      {:else if $projectStore.stops.type === StopType.MANUAL}
+        <ManualStopsEditor
+          stops={$projectStore.stops}
+          on:update={(e) => updateProject({ stops: e.detail })}
+        />
       {/if}
     </div>
   {/if}
 
-  {#each colorRamps as ramp, i}
+  {#each $projectStore.colorRamps as ramp, i}
     <div class="color-editor">
       <ColorRampEditor
         name={ramp.name}
         keyColors={ramp.keyColors}
         on:updateName={(e) => {
           ramp.name = e.detail;
-          colorRamps = colorRamps;
+          updateProject();
         }}
         on:addColor={() => {
           ramp.addColor();
-          colorRamps = colorRamps;
+          updateProject();
         }}
         on:updateColor={(e) => {
           const { index, color } = e.detail;
           ramp.updateColor(index, color);
-          colorRamps = colorRamps;
+          updateProject();
         }}
         on:removeColor={(e) => {
           ramp.removeColor(e.detail);
-          colorRamps = colorRamps;
+          updateProject();
         }}
         on:remove={() => {
-          if (colorRamps.length > 1) {
-            colorRamps.splice(i, 1);
-            colorRamps = colorRamps;
+          if ($projectStore.colorRamps.length > 1) {
+            updateProject({
+              colorRamps: $projectStore.colorRamps.filter((_, j) => j !== i),
+            });
           }
         }}
       />
