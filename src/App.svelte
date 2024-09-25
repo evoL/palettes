@@ -14,7 +14,15 @@
   import { CURVES } from "./lib/presets";
   import { nameStops } from "./lib/stop_names";
   import { onDestroy, onMount } from "svelte";
-  import { projectStore, store, updateProject } from "./lib/model";
+  import {
+    addProject,
+    projectStore,
+    removeActiveProject,
+    renameActiveProject,
+    setActiveIndex,
+    store,
+    updateProject,
+  } from "./lib/model";
   import {
     fromPersisted,
     loadProjects,
@@ -22,6 +30,7 @@
     toPersisted,
   } from "./lib/storage";
   import { type Unsubscriber } from "svelte/store";
+  import ProjectPicker from "./components/ProjectPicker.svelte";
 
   let isEditing = false;
   let initialFetchDone = false;
@@ -42,11 +51,6 @@
       });
     }
 
-    // Initialize color ramps — they are empty by default.
-    if (!$projectStore.colorRamps.length) {
-      addRamp();
-    }
-
     unsubscribePersistence = store.subscribe((state) => {
       if (!initialFetchDone) return;
 
@@ -63,6 +67,15 @@
   onDestroy(() => {
     if (unsubscribePersistence) unsubscribePersistence();
   });
+
+  // Effects (?)
+
+  $: {
+    // Initialize color ramps — they are empty by default.
+    if (!$projectStore.colorRamps.length) {
+      addRamp();
+    }
+  }
 
   // Derived state
 
@@ -156,32 +169,43 @@
       </sl-tooltip>
     {/if}
 
-    <div class="settings">
-      {#if isEditing}
-        <SettingsEditor
-          stopType={$projectStore.stops.type}
-          colorSpaceType={$projectStore.colorSpaceType}
-          isInverted={$projectStore.isInverted}
-          on:stopTypeChange={(e) => changeStopType(e.detail)}
-          on:colorSpaceTypeChange={(e) =>
-            updateProject({ colorSpaceType: e.detail })}
-          on:isInvertedChange={(e) => updateProject({ isInverted: e.detail })}
-        />
-      {:else}
-        <SettingsPreview
-          stopType={$projectStore.stops.type}
-          colorSpaceType={$projectStore.colorSpaceType}
-          isInverted={$projectStore.isInverted}
-        />
-      {/if}
+    <div class="settings gap-top-2xs">
+      <ProjectPicker
+        projects={$store.projects}
+        activeIndex={$store.activeIndex}
+        on:add={addProject}
+        on:remove={removeActiveProject}
+        on:rename={(e) => renameActiveProject(e.detail)}
+        on:activeIndexChange={(e) => setActiveIndex(e.detail)}
+      />
 
-      <div class="export-button">
+      <div class="gap-top-2xs">
         <ExportButton
           ramps={$projectStore.colorRamps}
           stops={actualStops}
           {stopNames}
           {colorSpace}
         />
+      </div>
+
+      <div class="gap-top-s">
+        {#if isEditing}
+          <SettingsEditor
+            stopType={$projectStore.stops.type}
+            colorSpaceType={$projectStore.colorSpaceType}
+            isInverted={$projectStore.isInverted}
+            on:stopTypeChange={(e) => changeStopType(e.detail)}
+            on:colorSpaceTypeChange={(e) =>
+              updateProject({ colorSpaceType: e.detail })}
+            on:isInvertedChange={(e) => updateProject({ isInverted: e.detail })}
+          />
+        {:else}
+          <SettingsPreview
+            stopType={$projectStore.stops.type}
+            colorSpaceType={$projectStore.colorSpaceType}
+            isInverted={$projectStore.isInverted}
+          />
+        {/if}
       </div>
     </div>
   </header>
@@ -256,7 +280,7 @@
   main {
     display: grid;
     gap: var(--sl-spacing-small) var(--sl-spacing-small);
-    grid-template-columns: 200px 1fr;
+    grid-template-columns: 240px 1fr;
     margin: 0 auto;
     max-width: 1280px;
     padding: 0 var(--sl-spacing-medium);
@@ -275,12 +299,9 @@
   }
 
   .settings {
+    display: flex;
+    flex-direction: column;
     grid-column: 1 / 3;
-    margin-top: var(--sl-spacing-2x-small);
-  }
-
-  .export-button {
-    margin-top: var(--sl-spacing-small);
   }
 
   .stop-editor {

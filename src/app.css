@@ -10,3 +10,11 @@ h1, h4, ul, li, dl, dt, dd {
   margin: 0;
   padding: 0;
 }
+
+.gap-top-s {
+  margin-top: var(--sl-spacing-small);
+}
+
+.gap-top-2xs {
+  margin-top: var(--sl-spacing-2x-small);
+}
