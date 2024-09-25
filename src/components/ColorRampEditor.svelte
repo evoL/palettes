@@ -1,12 +1,13 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
+  import { serialize } from "@shoelace-style/shoelace/dist/utilities/form.js";
   import { toSrgb, type ColorModel } from "../lib/colors";
-  import type SlInput from "@shoelace-style/shoelace/dist/components/input/input.component";
+  import { autofocus } from "../lib/actions";
 
   export let name: string;
   export let keyColors: ColorModel[] = [];
 
-  let nameInput: SlInput | undefined;
+  let form: HTMLFormElement | undefined = undefined;
   let isEditing = false;
 
   const dispatch = createEventDispatcher<{
@@ -17,39 +18,42 @@
     remove: void;
   }>();
 
-  function confirmNameChange(newName: string | undefined) {
-    if (newName !== name) {
-      dispatch("updateName", newName);
-    }
+  function confirmNameChange() {
+    const data = serialize(form);
+    const name = data["name"] as string;
+    dispatch("updateName", name || "Color");
     isEditing = false;
   }
 </script>
 
 <div class="editor">
   {#if isEditing}
-    <sl-input
-      bind:this={nameInput}
-      class="name input"
-      value={name}
-      placeholder="Cornflower Blue"
-      on:sl-change={(e) => {
-        confirmNameChange(e.target.value || undefined);
+    <form
+      bind:this={form}
+      on:submit={(e) => {
+        e.preventDefault();
+        confirmNameChange();
       }}
-      on:keydown={(e) => {
-        if (e.key === "Escape") {
-          nameInput.value = name;
-          isEditing = false;
-        }
-      }}
-    />
-    <sl-icon-button
-      class="action action--confirm"
-      name="check-circle"
-      label="Confirm new name"
-      on:click={() => {
-        confirmNameChange(nameInput.value);
-      }}
-    />
+    >
+      <sl-input
+        class="name input"
+        name="name"
+        value={name}
+        placeholder="Color"
+        use:autofocus
+        on:keydown={(e) => {
+          if (e.key === "Escape") {
+            isEditing = false;
+          }
+        }}
+      />
+      <sl-icon-button
+        class="action action--confirm"
+        name="check-circle"
+        label="Confirm new name"
+        on:click={() => confirmNameChange()}
+      />
+    </form>
   {:else}
     <h1 class="name">{name}</h1>
     <sl-tooltip content="Edit name">
@@ -119,6 +123,10 @@
     display: grid;
     gap: var(--sl-spacing-2x-small) var(--sl-spacing-x-small);
     grid-template-columns: 1fr auto;
+  }
+
+  form {
+    display: contents;
   }
 
   h1 {

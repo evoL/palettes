@@ -66,6 +66,10 @@ export class ColorRamp {
     return (darkContrast > lightContrast) ? this.#darkColor : this.#lightColor;
   }
 
+  setName(name: string): void {
+    this.name = name;
+  }
+
   addColor(): void {
     this.#keyColors.push(this.#keyColors[this.#keyColors.length - 1].clone());
     this.#invalidate();

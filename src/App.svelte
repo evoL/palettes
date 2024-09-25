@@ -233,7 +233,7 @@
         name={ramp.name}
         keyColors={ramp.keyColors}
         on:updateName={(e) => {
-          ramp.name = e.detail;
+          ramp.setName(e.detail);
           updateProject();
         }}
         on:addColor={() => {

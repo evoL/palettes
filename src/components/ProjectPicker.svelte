@@ -1,8 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import type { Action } from "svelte/action";
-  import type SlInput from "@shoelace-style/shoelace/dist/components/input/input.component";
   import { serialize } from "@shoelace-style/shoelace/dist/utilities/form.js";
+  import { autofocus } from "../lib/actions";
   import type { Project } from "../lib/types";
   import { DEFAULT_NAME } from "../lib/model";
 
@@ -18,12 +17,6 @@
     rename: string;
     activeIndexChange: number;
   }>();
-
-  const autofocus: Action<SlInput> = (input) => {
-    input.updateComplete.then(() => {
-      input.focus();
-    });
-  };
 
   function startEditing() {
     isEditing = true;
